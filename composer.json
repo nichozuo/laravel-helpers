@@ -1,0 +1,21 @@
+{
+    "name": "nichozuo\/laravel-helpers",
+    "description": "Package description here.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "nichozuo",
+            "email": "nichozuo@qq.com"
+        }
+    ],
+    "require": {
+        "php": "^7.3",
+        "laravel/framework": "^8.0",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nichozuo\\LaravelHelpers\\": "src"
+        }
+    }
+}
