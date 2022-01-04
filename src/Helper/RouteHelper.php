@@ -26,8 +26,6 @@ class RouteHelper
         $prefix = self::getPrefix($prefix, $controller);
 
         foreach ($actions as $item) {
-            if ($item == '__construct')
-                continue;
             $temp = explode(':', $item);
             $method = (count($temp) >= 2) ? [$temp[0]] : ['post'];
             $action = (count($temp) >= 2) ? $temp[1] : $temp[0];
@@ -37,8 +35,7 @@ class RouteHelper
     }
 
     /**
-     * 计算prefix
-     *
+     * @intro 计算prefix
      * @param string $prefix
      * @param string $controller
      * @return string
@@ -58,6 +55,7 @@ class RouteHelper
     }
 
     /**
+     * @intro 获得Controller下有效的actions
      * @param string $controller
      * @param array $actions
      * @return array
@@ -71,11 +69,9 @@ class RouteHelper
         $newActions = [];
         $ref = new ReflectionClass($controller);
         foreach ($ref->getMethods() as $method) {
-//            dd($method->getModifiers());
-            if ($method->getDeclaringClass()->getName() == $controller && $method->getModifiers() == 1) {
+//            dump($method->getDeclaringClass()->getName(), $method->getName(), $method->getModifiers());
+            if ($method->getDeclaringClass()->getName() == $controller && $method->getModifiers() == 1 && $method->getName() != '__construct') {
                 $newActions[] = $method->getName();
-            } else {
-                break;
             }
         }
         return $newActions;

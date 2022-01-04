@@ -6,13 +6,19 @@ namespace Nichozuo\LaravelHelpers\Middleware;
 
 use Closure;
 use Illuminate\Http\JsonResponse;
-use Nichozuo\LaravelUtils\Traits\ExceptionsRenderTrait;
+use Nichozuo\LaravelHelpers\Traits\ExceptionsRenderTrait;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ResponseJson
 {
     use ExceptionsRenderTrait;
 
+    /**
+     * @intro 处理json响应的中间件
+     * @param $request
+     * @param Closure $next
+     * @return JsonResponse|mixed|BinaryFileResponse
+     */
     public function handle($request, Closure $next)
     {
         $response = $next($request);
@@ -22,7 +28,8 @@ class ResponseJson
             'message' => 'ok',
         ];
 
-        $responseDontWrap = config('codegen.responseDontWrap');
+        // 处理不被code和message包裹的响应
+        $responseDontWrap = config('nichozuo.responseDontWrap', []);
         if (count($responseDontWrap)) {
             $pathInfo = $request->getPathInfo();
             if (in_array($pathInfo, $responseDontWrap)) {
@@ -30,24 +37,21 @@ class ResponseJson
             }
         }
 
+        // 处理json响应
         if ($response instanceof JsonResponse) {
 
             $data = $response->getData();
             $type = gettype($data);
 
             if ($type == 'object') {
-//                // 如果是version
-//                if (strpos($request->getPathInfo(), '/auth/version'))
-//                    return $response->setData($data);
-
                 // 如果是exception
                 if (property_exists($data, 'code') && property_exists($data, 'message') && $data->code !== 0)
                     return $response->setData($data);
 
-                // 处理一些统计数据
-                if (property_exists($data, 'statistics')){
-                    $base['statistics'] = $data->statistics;
-                    unset($data->statistics);
+                // 处理一些与分页一起的其他数据
+                if (property_exists($data, 'additions')) {
+                    $base['additions'] = $data->additions;
+                    unset($data->additions);
                 }
 
                 // 处理标准分页

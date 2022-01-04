@@ -6,112 +6,110 @@ namespace Nichozuo\LaravelHelpers\Traits;
 
 use Carbon\Carbon;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
-use Nichozuo\LaravelUtils\Exceptions\Err;
+use Nichozuo\LaravelHelpers\Exceptions\Err;
 
 trait ModelTrait
 {
     /**
-     * 如果key/value存在，添加where条件
-     *
-     * @param $query
-     * @param $field // 字段名
-     * @param $params // 输入参数
-     * @param null $key // 参数中的key，为空则默认为字段名
-     * @return mixed
+     * @intro 如果key/value存在，添加where条件
+     * @param Builder $query
+     * @param array $params
+     * @param string $key
+     * @param string $field
+     * @return Builder
      */
-    public function scopeWhereExist($query, $field, $params, $key = null)
+    public function scopeIfWhere(Builder $query, array $params, string $key, string $field = ''): Builder
     {
-        if ($key == null)
-            $key = $field;
-
         if (isset($params[$key])) {
+            $field = ($field == '') ? $key : $field;
             return $query->where($field, $params[$key]);
         }
+        return $query;
     }
 
     /**
-     * 如果key/value存在，添加whereIn条件
-     *
-     * @param $query
-     * @param $field // 字段名
-     * @param $params // 输入参数
-     * @param null $key // 参数中的key，为空则默认为字段名
-     * @return mixed
+     * @intro 如果key/value存在，添加whereIn条件
+     * @param Builder $query
+     * @param array $params
+     * @param string $key
+     * @param string $field
+     * @return Builder
+     * @throws Err
      */
-    public function scopeWhereInExist($query, $field, $params, $key = null)
+    public function scopeIfWhereIn(Builder $query, array $params, string $key, string $field = ''): Builder
     {
-        if ($key == null)
-            $key = $field;
-
-        if (isset($params[$key]) && count($params[$key]) > 0) {
+        if (isset($params[$key])) {
+            if (is_array($params[$key]) && count($params[$key]) == 0)
+                throw Err::NewText('ifWhereIn的参数必须是数组');
+            $field = ($field == '') ? $key : $field;
             return $query->whereIn($field, $params[$key]);
         }
+        return $query;
     }
 
     /**
-     * @param $query
-     * @param $field
-     * @param $params
-     * @param $key
+     * @intro 如果key/value存在，添加whereLike条件
+     * @param Builder $query
+     * @param array $params
+     * @param string $key
+     * @param string $field
      * @return mixed
      */
-    public function scopeWhereLikeExist($query, $field, $params, $key = null)
+    public function scopeIfWhereLike(Builder $query, array $params, string $key, string $field = ''): Builder
     {
-        if ($key == null)
-            $key = $field;
-
         if (isset($params[$key])) {
+            $field = ($field == '') ? $key : $field;
             return $query->where($field, 'like', "%{$params[$key]}%");
         }
-    }
-
-    public function scopeWhereBetweenExist($query, $field, $key, $params)
-    {
-        if (isset($params[$key]) && $params[$key] != []) {
-            $start = Carbon::parse($params[$key][0])->toDateString();
-            $end = Carbon::parse($params[$key][1])->toDateString();
-            return $query->whereBetween($field, $params[$key]);
-        }
+        return $query;
     }
 
     /**
-     * 根据ID获取实例
-     *
-     * @param $query
-     * @param $id
-     * @return mixed
-     */
-    public function scopeId($query, $id)
-    {
-        return $query->findOrFail($id);
-    }
-
-    /**
-     * 根据$params['id]获取实例
-     *
-     * @param $query
-     * @param $params
-     * @param string $field
+     * @intro 如果key/value存在，添加whereBetween条件
+     * @param Builder $query
+     * @param array $params
      * @param string $key
-     * @return mixed
+     * @param string $field
+     * @param string $type
+     * @param string $op1
+     * @param string $op2
+     * @return Builder
+     * @throws Err
      */
-    public function scopeIdp($query, $params, $field = 'id', $key = 'id')
+    public function scopeIfRange(Builder $query, array $params, string $key, string $field = '', string $type = 'float', string $op1 = '<', string $op2 = '>='): Builder
     {
-        return $query->findOrFail($params[$key]);
-    }
+        if (isset($params[$key])) {
+            $field = ($field == '') ? $key : $field;
+            $a = $params[$key];
 
+            if (is_array($a) && count($a) != 2)
+                throw Err::NewText('ifRange参数必须是数组，且有2位');
 
-    public function scopeSoftDelete($query, $params)
-    {
-        switch ($params['method']) {
-            case 'delete':
-                return $query->update(['enable' => false]);
-            case 'restore':
-                return $query->update(['enable' => true]);
-            default:
+            // 数据类型
+            if ($type == 'date') {
+                $a[0] = $a[0] == "" ? "" : Carbon::parse($a[0])->toDateString();
+                $a[1] = $a[1] == "" ? "" : Carbon::parse($a[1])->toDateString();
+            } elseif ($type == 'datetime') {
+                $a[0] = $a[0] == "" ? "" : Carbon::parse($a[0])->toDateTimeString();
+                $a[1] = $a[1] == "" ? "" : Carbon::parse($a[1])->toDateTimeString();
+            } else {
+                $a[0] = $a[0] == "" ? "" : floatval($a[0]);
+                $a[1] = $a[1] == "" ? "" : floatval($a[1]);
+            }
+
+            // 判断逻辑
+            if ($a[0] == "" && $a[1] == "")
                 return $query;
+            else if ($a[0] == "")
+                return $query->where($field, $op1, $a[1]);
+            else if ($a[1] == "")
+                return $query->where($field, $op2, $a[0]);
+            else
+                return $query->whereBetween($field, $a);
         }
+        return $query;
     }
 
     /**

@@ -4,28 +4,29 @@
 namespace Nichozuo\LaravelHelpers\Traits;
 
 
-//use Faker\Factory;
+use Faker\Factory;
 use Illuminate\Support\Str;
 
 trait TestCaseTrait
 {
-    protected $token = '1|jhhUAcR4XLRpYUte798MOPqAuxHKShl4MgpUgJdz';
+    protected $token;
     protected $faker;
     protected $id;
 
     public function setUp(): void
     {
-//        $this->faker = Factory::create('zh_CN');
+        $this->faker = Factory::create('zh_CN');
         parent::setUp();
     }
 
     /**
-     * @param $method
+     * @intro 发起接口的请求
+     * @param string $method
      * @param array $params
      * @param array $headers
-     * @return mixed
+     * @return void
      */
-    protected function go($method, array $params = [], array $headers = [])
+    protected function go(string $method, array $params = [], array $headers = [])
     {
         $url = $this->getUrl($method);
         $headers['Authorization'] = 'Bearer ' . $this->token;
@@ -37,10 +38,11 @@ trait TestCaseTrait
     }
 
     /**
+     * @intro 获取fake图片信息
      * @param $number
      * @return false|string
      */
-    protected function getImages($number)
+    private function getFakeImages($number)
     {
         $images = null;
         foreach (range(0, $number) as $index) {
@@ -56,16 +58,17 @@ trait TestCaseTrait
 
 
     /**
-     * @param $method
+     * @intro 通过testMethod方法名，获取接口url
+     * @param string $method
      * @return string
      */
-    private function getUrl($method): string
+    private function getUrl(string $method): string
     {
         $t1 = explode('\\', $method);
         $urls[] = 'api';
 
         foreach ($t1 as $key => $value) {
-            if ($key > 1 && $key < count($t1) -1) {
+            if ($key > 1 && $key < count($t1) - 1) {
                 $urls[] = Str::snake($value);
             }
         }

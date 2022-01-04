@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\DB;
 class TransactionHelper
 {
     /**
+     * @intro 开启事务
      * @param Closure $closure
+     * @throws Exception
      */
     public static function Trans(Closure $closure)
     {

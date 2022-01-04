@@ -23,10 +23,10 @@ class Err extends BaseException
 
     /**
      * @intro 抛出新错误
-     * @param $description
+     * @param string $description
      * @return static
      */
-    public static function NewText($description): Err
+    public static function NewText(string $description): Err
     {
         return new static(999, '发生错误', $description);
     }
