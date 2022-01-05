@@ -113,16 +113,16 @@ trait ModelTrait
     }
 
     /**
-     * 排序，默认id倒序
-     *
-     * @param $query
-     * @return mixed
+     * @intro 排序，默认id倒序
+     * @param Builder $query
+     * @param string $key
+     * @return Builder
      */
-    public function scopeOrder($query)
+    public function scopeOrder(Builder $query, string $key = 'orderBy'): Builder
     {
-        $params = request()->only('orderBy');
-        if (isset($params['orderBy'])) {
-            $orderBy = $params['orderBy'];
+        $params = request()->only($key);
+        if (isset($params[$key])) {
+            $orderBy = $params[$key];
             if (count($orderBy) == 2) {
                 if ($orderBy[1] == 'descend') {
                     return $query->orderBy($orderBy[0], 'desc');
@@ -148,9 +148,19 @@ trait ModelTrait
         $model = $query->where($data)->first();
         if ($model && $label != null) {
             if (!isset($params['id']) || $model->id != $params['id'])
-                throw Err::New(Err::DBRecordExist, "{$label}【{$params[$keys[0]]}】已存在，请重试");
+                throw Err::NewText("{$label}【{$params[$keys[0]]}】已存在，请重试");
         }
         return $query;
+    }
+
+    /**
+     * @param $query
+     * @param string $key
+     * @return mixed
+     */
+    public function scopeNewest($query, string $key = 'updated_at')
+    {
+        return $query->orderBy($key, 'desc');
     }
 
     /**
@@ -168,7 +178,7 @@ trait ModelTrait
             return true;
         } else {
             if ($errMessage != null)
-                throw Err::New(Err::DBRecordExist, $errMessage);
+                throw Err::NewText($errMessage);
             return false;
         }
     }
@@ -184,16 +194,6 @@ trait ModelTrait
         if (!$model)
             throw Err::NewText("没有此【" . self::$name . "】记录");
         return $model;
-    }
-
-    /**
-     * @param $query
-     * @param string $key
-     * @return mixed
-     */
-    public function scopeNewest($query, $key = 'updated_at')
-    {
-        return $query->orderBy($key, 'desc');
     }
 
     /**
