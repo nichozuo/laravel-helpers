@@ -13,7 +13,7 @@ class SQLHelper
     /**
      * @intro 记录sql日志
      */
-    public static function SqlLog()
+    public static function logSql()
     {
         if (config('app.debug')) {
             DB::listen(function ($query) {
